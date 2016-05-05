@@ -5,59 +5,57 @@ var IsAndroid = RNSound.IsAndroid;
 
 var nextKey = 0;
 
-function Sound(filename, basePath, onError) {
-  this._filename = basePath ? basePath + '/' + filename : filename;
+function Sound(type, filename, onError) {
+  // type: 'file', 'stream'
 
-  if (IsAndroid && !basePath) {
-    this._filename = filename.toLowerCase().replace(/\.[^.]+$/, '');
+  this._loaded = false;
+  this._key = nextKey++;
+  this._duration = -1;
+  this._numberOfChannels = -1;
+  this._volume = 1;
+  this._pan = 0;
+  this._numberOfLoops = 0;
+
+  if (type === 'stream') {
+    this._filename = filename;
+
+    const player = RNSound.prepareAudioStream(this._filename, this._key, (error, props) => {
+      if (props) {
+        if (typeof props.duration === 'number') {
+          this._duration = props.duration;
+        }
+        if (typeof props.numberOfChannels === 'number') {
+          this._numberOfChannels = props.numberOfChannels;
+        }
+      }
+      if (error === null) {
+        this._loaded = true;
+      }
+      onError && onError(error);
+    });
+
+  } else {
+    const basePath = '/';
+    this._filename = basePath ? basePath + '/' + filename : filename;
+    if (IsAndroid && !basePath) {
+      this._filename = filename.toLowerCase().replace(/\.[^.]+$/, '');
+    }
+
+    RNSound.prepare(this._filename, this._key, (error, props) => {
+      if (props) {
+        if (typeof props.duration === 'number') {
+          this._duration = props.duration;
+        }
+        if (typeof props.numberOfChannels === 'number') {
+          this._numberOfChannels = props.numberOfChannels;
+        }
+      }
+      if (error === null) {
+        this._loaded = true;
+      }
+      onError && onError(error);
+    });
   }
-
-  this._loaded = false;
-  this._key = nextKey++;
-  this._duration = -1;
-  this._numberOfChannels = -1;
-  this._volume = 1;
-  this._pan = 0;
-  this._numberOfLoops = 0;
-  RNSound.prepare(this._filename, this._key, (error, props) => {
-    if (props) {
-      if (typeof props.duration === 'number') {
-        this._duration = props.duration;
-      }
-      if (typeof props.numberOfChannels === 'number') {
-        this._numberOfChannels = props.numberOfChannels;
-      }
-    }
-    if (error === null) {
-      this._loaded = true;
-    }
-    onError && onError(error);
-  });
-}
-
-function Sound(url, onError) {
-  this._filename = url;
-  this._loaded = false;
-  this._key = nextKey++;
-  this._duration = -1;
-  this._numberOfChannels = -1;
-  this._volume = 1;
-  this._pan = 0;
-  this._numberOfLoops = 0;
-  const player = RNSound.prepareAudioStream(this._filename, this._key, (error, props) => {
-    if (props) {
-      if (typeof props.duration === 'number') {
-        this._duration = props.duration;
-      }
-      if (typeof props.numberOfChannels === 'number') {
-        this._numberOfChannels = props.numberOfChannels;
-      }
-    }
-    if (error === null) {
-      this._loaded = true;
-    }
-    onError && onError(error);
-  });
 }
 
 Sound.prototype.isLoaded = function() {
@@ -65,6 +63,7 @@ Sound.prototype.isLoaded = function() {
 };
 
 Sound.prototype.play = function(onEnd) {
+  console.log('play: this._loaded = ', this._loaded);
   if (this._loaded) {
     RNSound.play(this._key, (successfully) => onEnd && onEnd(successfully));
   }
@@ -72,6 +71,7 @@ Sound.prototype.play = function(onEnd) {
 };
 
 Sound.prototype.pause = function() {
+  console.log('pause: this._loaded = ', this._loaded);
   if (this._loaded) {
     RNSound.pause(this._key);
   }
@@ -79,6 +79,7 @@ Sound.prototype.pause = function() {
 };
 
 Sound.prototype.stop = function() {
+  console.log('stop: this._loaded = ', this._loaded);
   if (this._loaded) {
     RNSound.stop(this._key);
   }
@@ -86,6 +87,7 @@ Sound.prototype.stop = function() {
 };
 
 Sound.prototype.release = function() {
+  console.log('release: this._loaded = ', this._loaded);
   if (this._loaded) {
     RNSound.release(this._key);
   }

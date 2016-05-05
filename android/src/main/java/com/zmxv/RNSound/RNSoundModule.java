@@ -1,9 +1,11 @@
 package com.zmxv.RNSound;
 
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer.OnErrorListener;
 import android.net.Uri;
+import android.util.Log;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
@@ -45,6 +47,39 @@ public class RNSoundModule extends ReactContextBaseJavaModule {
     WritableMap props = Arguments.createMap();
     props.putDouble("duration", player.getDuration() * .001);
     callback.invoke(NULL, props);
+  }
+
+  @ReactMethod
+  public void prepareAudioStream(final String url, final Integer key, final Callback callback) {
+    final MediaPlayer player = new MediaPlayer();
+    try {
+      player.setAudioStreamType(AudioManager.STREAM_MUSIC);
+      player.setDataSource(url);
+      player.prepare();
+    } catch (Exception e) {
+      WritableMap eMap = Arguments.createMap();
+      eMap.putString("message", "setDataSource IOException...");
+      callback.invoke(e);
+    }
+
+    //MediaPlayer player = createMediaPlayer(fileName);
+    if (player == null) {
+      WritableMap e = Arguments.createMap();
+      e.putInt("code", -1);
+      e.putString("message", "resource not found");
+      callback.invoke(e);
+      return;
+    }
+    this.playerPool.put(key, player);
+
+    player.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+      public void onPrepared(MediaPlayer mp) {
+        Log.d("TEST", "onPrepared: mp.duration=" + mp.getDuration() + ", player.duration=" + player.getDuration());
+        WritableMap props = Arguments.createMap();
+        props.putDouble("duration", player.getDuration() * .001);
+        callback.invoke(NULL, props);
+      }
+    });
   }
 
   protected MediaPlayer createMediaPlayer(final String fileName) {

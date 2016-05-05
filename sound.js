@@ -35,6 +35,31 @@ function Sound(filename, basePath, onError) {
   });
 }
 
+function Sound(url, onError) {
+  this._filename = url;
+  this._loaded = false;
+  this._key = nextKey++;
+  this._duration = -1;
+  this._numberOfChannels = -1;
+  this._volume = 1;
+  this._pan = 0;
+  this._numberOfLoops = 0;
+  const player = RNSound.prepareAudioStream(this._filename, this._key, (error, props) => {
+    if (props) {
+      if (typeof props.duration === 'number') {
+        this._duration = props.duration;
+      }
+      if (typeof props.numberOfChannels === 'number') {
+        this._numberOfChannels = props.numberOfChannels;
+      }
+    }
+    if (error === null) {
+      this._loaded = true;
+    }
+    onError && onError(error);
+  });
+}
+
 Sound.prototype.isLoaded = function() {
   return this._loaded;
 };
@@ -133,12 +158,6 @@ Sound.prototype.setCurrentTime = function(value) {
 
 Sound.enable = function(enabled) {
   RNSound.enable(enabled);
-};
-
-Sound.enableInSilenceMode = function(enabled) {
-  if (!IsAndroid) {
-    RNSound.enableInSilenceMode(enabled);
-  }
 };
 
 if (!IsAndroid) {

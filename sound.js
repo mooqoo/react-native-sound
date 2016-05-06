@@ -5,7 +5,7 @@ var IsAndroid = RNSound.IsAndroid;
 
 var nextKey = 0;
 
-function Sound(type, filename, onError) {
+function Sound(type, filename, basePath, onError) {
   // type: 'file', 'stream'
 
   this._loaded = false;
@@ -35,7 +35,6 @@ function Sound(type, filename, onError) {
     });
 
   } else {
-    const basePath = '/';
     this._filename = basePath ? basePath + '/' + filename : filename;
     if (IsAndroid && !basePath) {
       this._filename = filename.toLowerCase().replace(/\.[^.]+$/, '');
